@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approvals</title>
+
+<style>
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+th { background: #f2f2f2; }
+
+button {
+    padding: 5px 10px;
+    margin: 2px;
+}
+
+.approve { background: green; color: white; border: none; }
+.reject { background: red; color: white; border: none; }
+</style>
+</head>
+
+<body>
+
+<h2>Pending Updates</h2>
+
+<a href="/dashboard">Back</a>
+
+<table>
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Current</th>
+    <th>Last</th>
+    <th>Interval</th>
+    <th>Action</th>
+</tr>
+
+{% for u in updates %}
+<tr>
+    <td>{{ u["id"] }}</td>
+    <td>{{ u["name"] }}</td>
+    <td>{{ u["current"] }}</td>
+    <td>{{ u["last"] }}</td>
+    <td>{{ u["interval"] }}</td>
+    <td>
+        <a href="/approve/{{ u['id'] }}"><button class="approve">Approve</button></a>
+        <a href="/reject/{{ u['id'] }}"><button class="reject">Reject</button></a>
+    </td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard</title>
+
+<style>
+body { font-family: Arial; padding: 10px; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+td, th {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    border: none;
+    background: transparent;
+}
+
+/* STATUS COLORS */
+.good { background: lightgreen; }
+.duesoon { background: orange; }
+.due { background: gold; }
+.overdue { background: salmon; }
+
+.topbar a {
+    margin-right: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <a href="/logout">Logout</a>
+
+    {% if role == 'manager' %}
+        <a href="/approvals">Engine Approvals</a>
+    {% endif %}
+</div>
+
+<h2>Equipment Dashboard</h2>
+
+<input id="search" placeholder="Search..." onkeyup="load()">
+
+<br><br>
+
+<!-- ADD EQUIPMENT -->
+<form method="POST" action="/add">
+    <input name="name" placeholder="Name" required>
+    <input name="tag" placeholder="Tag" required>
+    <input name="current" placeholder="Current Hours" required>
+    <input name="last" placeholder="Last Service Hours" required>
+    <input name="interval" placeholder="PM Interval" required>
+    <input type="date" name="date">
+    <button>Add</button>
+</form>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Tag</th>
+<th>Current</th>
+<th>Last Service</th>
+<th>Interval</th>
+<th>Date</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+</table>
+
+<hr>
+
+<div style="text-align:center;color:gray;">
+    System Owned & Managed By: <b>{{ owner }}</b>
+</div>
+
+<script>
+
+function escapeHtml(str) {
+    return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function normalizeStatus(status) {
+    return (status || "")
+        .toLowerCase()
+        .replace(/\s+/g, "");
+}
+
+async function load() {
+    let search = document.getElementById("search").value;
+
+    let res = await fetch("/api/equipment?search=" + encodeURIComponent(search));
+
+    if (!res.ok) {
+        alert("Error loading equipment: " + res.status);
+        return;
+    }
+
+    let data = await res.json();
+
+    if (!data.length) {
+        document.getElementById("table").innerHTML = "<tr><td colspan='8'>No data found</td></tr>";
+        return;
+    }
+
+    let html = "";
+
+    data.forEach(e => {
+
+        let statusClass = normalizeStatus(e.status);
+
+        html += `
+        <tr class="${statusClass}">
+            <td><input value="${escapeHtml(e.name)}"></td>
+            <td><input value="${escapeHtml(e.tag)}"></td>
+            <td><input value="${escapeHtml(e.current)}"></td>
+            <td><input value="${escapeHtml(e.last)}"></td>
+            <td><input value="${escapeHtml(e.interval)}"></td>
+            <td><input type="date" value="${e.date || ''}"></td>
+            <td>${escapeHtml(e.status)}</td>
+            <td>
+                <button onclick="submitUpdate(${e.id}, this)">Update</button>
+                <button onclick="submitPM(${e.id}, this)">PM Complete</button>
+
+                <form method="POST" action="/delete/${e.id}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete this item?')">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById("table").innerHTML = html;
+}
+
+async function submitUpdate(id, btn) {
+    let row = btn.parentElement.parentElement.children;
+
+    let data = {
+        name: row[0].children[0].value,
+        tag: row[1].children[0].value,
+        current: row[2].children[0].value,
+        last: row[3].children[0].value,
+        interval: row[4].children[0].value,
+        date: row[5].children[0].value
+    };
+
+    let res = await fetch("/submit_update/" + id, {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: new URLSearchParams(data)
+    });
+
+    if (res.ok) {
+        alert("Update submitted for approval");
+    } else {
+        alert("Update failed");
+    }
+}
+
+async function submitPM(id, btn) {
+    let row = btn.parentElement.parentElement.children;
+
+    let data = {
+        name: row[0].children[0].value,
+        tag: row[1].children[0].value,
+        current: row[2].children[0].value,
+        last: row[3].children[0].value,
+        interval: row[4].children[0].value,
+        date: row[5].children[0].value
+    };
+
+    let res = await fetch("/submit_pm/" + id, {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: new URLSearchParams(data)
+    });
+
+    if (res.ok) {
+        alert("PM submitted for approval");
+    } else {
+        alert("PM failed");
+    }
+}
+
+load();
+
+</script>
+
+</body>
+</html>

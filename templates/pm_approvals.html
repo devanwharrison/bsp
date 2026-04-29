@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM Approvals</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background: #f5f5f5;
+}
+
+tr:nth-child(even) {
+    background: #fafafa;
+}
+
+button {
+    padding: 6px 10px;
+    margin: 2px;
+    cursor: pointer;
+}
+
+.approve {
+    background: #2ecc71;
+    color: white;
+    border: none;
+}
+
+.reject {
+    background: #e74c3c;
+    color: white;
+    border: none;
+}
+
+.topbar {
+    margin-bottom: 10px;
+}
+
+.topbar a {
+    text-decoration: none;
+    color: #2d6cdf;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <a href="/dashboard">← Back to Dashboard</a>
+</div>
+
+<h2>PM Completion Approvals</h2>
+
+{% if items and items|length > 0 %}
+
+<table>
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Current</th>
+    <th>Last Service</th>
+    <th>Notes</th>
+    <th>Action</th>
+</tr>
+
+{% for p in items %}
+<tr>
+    <td>{{ p["id"] }}</td>
+    <td>{{ p["name"] }}</td>
+    <td>{{ p["current"] }}</td>
+    <td>{{ p["last"] }}</td>
+    <td>{{ p["notes"] }}</td>
+
+    <td>
+        <!-- SAFE POST ACTIONS (FIXED SECURITY ISSUE) -->
+
+        <form method="POST" action="/approve_pm/{{ p['id'] }}" style="display:inline;">
+            <button class="approve" onclick="return confirm('Approve this PM completion?')">
+                Approve
+            </button>
+        </form>
+
+        <form method="POST" action="/reject_pm/{{ p['id'] }}" style="display:inline;">
+            <button class="reject" onclick="return confirm('Reject this PM completion?')">
+                Reject
+            </button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% else %}
+    <p>No pending PM approvals.</p>
+{% endif %}
+
+<hr>
+
+<div style="text-align:center;color:gray;">
+    System Owner: <b>{{ owner }}</b>
+</div>
+
+</body>
+</html>
